@@ -28,14 +28,14 @@ controls.listenToKeyEvents(document.body)
 
 // Asimuth - how far can you turn along the radius
 controls.minAzimuthAngle = 0;
-controls.maxAzimuthAngle = Math.PI / 2;
+controls.maxAzimuthAngle = Math.PI / 4;
 controls.minPolarAngle = Math.PI / 2.5;
 controls.maxPolarAngle = Math.PI / 2;
 controls.minDistance = 4;
 controls.maxDistance = 6;
 
 // Objects
-const geom = new THREE.BoxGeometry(1,2,1);
+const geom = new THREE.BoxGeometry(3,2,3);
 const material = new THREE.MeshBasicMaterial({color: "0x00ff00", wireframe: true});
 const cube = new THREE.Mesh(geom ,material)
 scene.add(cube);
