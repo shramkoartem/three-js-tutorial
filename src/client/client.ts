@@ -6,6 +6,11 @@ import { GUI } from 'dat.gui'
 const scene = new THREE.Scene()
 scene.add(new THREE.AxesHelper(5))
 
+const light = new THREE.PointLight(0xffffff, 1);
+light.position.set(10,10,10);
+scene.add(light)
+
+
 const camera = new THREE.PerspectiveCamera(
     75,
     window.innerWidth / window.innerHeight,
@@ -26,20 +31,7 @@ const icosahedronGeometry = new THREE.IcosahedronGeometry(1, 0)
 const planeGeometry = new THREE.PlaneGeometry()
 const torusKnotGeometry = new THREE.TorusKnotGeometry()
 
-const material = new THREE.MeshBasicMaterial({
-    color: 0x00ff00,
-    wireframe: true,
-})
-//const material = new THREE.MeshNormalMaterial()
-
-// Object main texture
-// const texture = new THREE.TextureLoader().load("img/grid.png");
-// material.map = texture;
-
-// Cube environment texture
-const envTexture = new THREE.CubeTextureLoader().load(["img/px_50.png", "img/nx_50.png", "img/py_50.png", "img/ny_50.png", "img/pz_50.png", "img/nz_50.png"])
-//texture.mapping = THREE.CubeReflectionMapping;
-material.envMap = envTexture;
+const material = new THREE.MeshToonMaterial()
 
 const cube = new THREE.Mesh(boxGeometry, material)
 cube.position.x = 5
@@ -72,40 +64,70 @@ function onWindowResize() {
 const stats = Stats()
 document.body.appendChild(stats.dom)
 
-// const options = {
-//     side: {
-//         "FrontSide": THREE.FrontSide,
-//         "BackSide": THREE.BackSide,
-//         "DoubleSide": THREE.DoubleSide,
-//     }
-// }
-
-let data = {
-    color: material.color.getHex(),
+const options = {
+    side: {
+        FrontSide: THREE.FrontSide,
+        BackSide: THREE.BackSide,
+        DoubleSide: THREE.DoubleSide,
+    },
+    gradientMap: {
+        Default: null,
+        threeTone: 'threeTone',
+        fourTone: 'fourTone',
+        fiveTone: 'fiveTone',
+    },
 }
 
 const gui = new GUI()
+
+const data = {
+    lightColor: light.color.getHex(),
+    color: material.color.getHex(),
+    gradientMap: 'threeTone',
+}
+
+
+const lightFolder = gui.addFolder('THREE.Light')
+lightFolder.addColor(data, 'lightColor').onChange(() => {
+    light.color.setHex(Number(data.lightColor.toString().replace('#', '0x')))
+})
+lightFolder.add(light, 'intensity', 0, 4)
+
 const materialFolder = gui.addFolder('THREE.Material')
 materialFolder.add(material, 'transparent').onChange(() => material.needsUpdate = true)
 materialFolder.add(material, 'opacity', 0, 1, 0.01)
 materialFolder.add(material, 'depthTest')
 materialFolder.add(material, 'depthWrite')
-materialFolder.add(material, 'wireframe')
-materialFolder.addColor(data, 'color').onChange(() => { material.color.setHex(Number(data.color.toString().replace('#', '0x')))})
-// materialFolder.add(material, 'alphaTest', 0, 1, 0.01).onChange(() => updateMaterial())
-// materialFolder.add(material, 'visible')
-// materialFolder.add(material, 'side', options.side).onChange(() => updateMaterial())
-materialFolder.add(material, 'reflectivity', 0, 1)
-materialFolder.open()
+materialFolder
+    .add(material, 'alphaTest', 0, 1, 0.01)
+    .onChange(() => updateMaterial())
+materialFolder.add(material, 'visible')
+materialFolder
+    .add(material, 'side', options.side)
+    .onChange(() => updateMaterial())
+//materialFolder.open()
 
-// function updateMaterial() {
-//     material.side = Number(material.side)
-//     material.needsUpdate = true
-// }
+const meshToonMaterialFolder = gui.addFolder('THREE.MeshToonMaterial')
+meshToonMaterialFolder.addColor(data, 'color').onChange(() => {
+    material.color.setHex(Number(data.color.toString().replace('#', '0x')))
+})
+
+//shininess, specular and flatShading no longer supported in MeshToonMaterial
+
+meshToonMaterialFolder
+    .add(data, 'gradientMap', options.gradientMap)
+    .onChange(() => updateMaterial())
+meshToonMaterialFolder.open()
+
+function updateMaterial() {
+    material.side = Number(material.side)
+    material.gradientMap = eval(data.gradientMap as string)
+    material.needsUpdate = true
+}
 
 function animate() {
     requestAnimationFrame(animate)
-
+    
     render()
 
     stats.update()
