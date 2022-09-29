@@ -1,11 +1,12 @@
-import * as THREE from 'three';
-import { OrbitControls } from 'three/examples/jsm/controls/OrbitControls';
+import * as THREE from 'three'
+import { PointerLockControls } from 'three/examples/jsm/controls/PointerLockControls'
+import Stats from 'three/examples/jsm/libs/stats.module'
 
-// A tree-like structure of Meshes, Lights, Groups, 3D Positions, Cameras (opt)
+// scene, camera, renderer
+
 const scene = new THREE.Scene();
-scene.background = new THREE.Color(0xffffff)
+scene.add(new THREE.AxesHelper());
 
-// Describes the view boundaries of the scene within the Frustum dimensions
 const camera = new THREE.PerspectiveCamera(
     75,
     window.innerWidth / window.innerHeight,
@@ -13,44 +14,67 @@ const camera = new THREE.PerspectiveCamera(
     1000
 );
 camera.position.z = 2;
+camera.position.y = 1;
 
-const renderer = new THREE.WebGLRenderer()
-renderer.setSize(window.innerWidth, window.innerHeight)
-document.body.appendChild(renderer.domElement)
-
-const geometry = new THREE.TorusKnotGeometry()
-const material = new THREE.MeshBasicMaterial({
-    color: 0x00ff00,
-    wireframe: true,
-})
-
-// Allows controling / rotating the scenery with your mouse
-new OrbitControls(camera, renderer.domElement); 
-
-const cube = new THREE.Mesh(geometry, material)
-scene.add(cube)
-
-console.dir(scene);
-
-window.addEventListener('resize', onWindowResize, false)
-function onWindowResize() {
-    camera.aspect = window.innerWidth / window.innerHeight
-    camera.updateProjectionMatrix()
-    renderer.setSize(window.innerWidth, window.innerHeight)
-    render()
-}
-
-function animate() {
-    requestAnimationFrame(animate)
-
-    cube.rotation.x += 0.01
-    cube.rotation.y += 0.01
-
-    render()
-}
+const renderer = new THREE.WebGLRenderer();
+renderer.setSize(window.innerWidth, window.innerHeight);
+document.body.appendChild(renderer.domElement);
 
 function render() {
-    renderer.render(scene, camera)
+    renderer.render(scene, camera);
+};
+
+// Controls 
+
+const controls = new PointerLockControls(camera, renderer.domElement);
+
+const menuPannel = document.getElementById('menuPanel') as HTMLDivElement;
+const startButton = document.getElementById('startButton') as HTMLButtonElement;
+
+startButton.addEventListener('click', () => {controls.lock()}, false)
+controls.addEventListener('lock', () => { menuPannel.style.display = 'none' });
+controls.addEventListener('unlock', () => { menuPannel.style.display = 'block' });
+
+// Map movement
+
+function onKeyDown (event: KeyboardEvent) {
+    switch (event.code) {
+        case 'KeyW':
+            controls.moveForward(0.25);
+            break;
+        case 'KeyS':
+            controls.moveForward(-0.25);
+            break;
+        case 'KeyA':
+            controls.moveRight(-0.25);
+            break
+        case 'KeyD':
+            controls.moveRight(0.25);
+            break
+    }
+}
+document.addEventListener('keydown', onKeyDown, false);
+ 
+// Geometry
+
+const planeGeom = new THREE.PlaneGeometry(100, 100, 50, 50);
+const planeMaterial = new THREE.MeshBasicMaterial({wireframe: true});
+const plane = new THREE.Mesh(planeGeom, planeMaterial);
+plane.rotateX( Math.PI / 2);
+scene.add(plane);
+
+document.addEventListener('resize', () => {
+    camera.aspect = window.innerWidth / window.innerHeight;
+    camera.updateProjectionMatrix();
+    renderer.setSize(window.innerWidth, window.innerHeight);
+    render();
+}, false);
+
+
+function animate() {
+    requestAnimationFrame( animate );
+
+    render();
 }
 
-animate()
+animate();
